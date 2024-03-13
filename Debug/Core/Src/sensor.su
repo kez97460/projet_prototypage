@@ -1,0 +1,3 @@
+../Core/Src/sensor.c:11:6:startMeasure	4	static
+../Core/Src/sensor.c:18:7:isMeasuring	4	static
+../Core/Src/sensor.c:23:6:measure	8	static
