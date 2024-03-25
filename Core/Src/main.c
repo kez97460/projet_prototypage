@@ -120,8 +120,17 @@ int main(void)
   while (1)
   {
 	  measure();
-	  HAL_Delay(100);
+	  if(sensor_capacity_pF > 50)
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+	  }
+	  else
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+	  }
 
+	  // UART : debug
+	  HAL_Delay(100);
 	  sprintf(uart_message, "Freq : %f Hz  - C : %f pF \r\n", sensor_input_frequency_hz, sensor_capacity_pF);
 	  HAL_UART_Transmit(&huart2, (unsigned char*) uart_message, 64, 500);
     /* USER CODE END WHILE */
@@ -260,6 +269,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_output_GPIO_Port, LED_output_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : C_input_Pin */
@@ -267,6 +279,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(C_input_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LED_output_Pin */
+  GPIO_InitStruct.Pin = LED_output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_output_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;

@@ -60,6 +60,8 @@ void Error_Handler(void);
 #define C_input_Pin GPIO_PIN_0
 #define C_input_GPIO_Port GPIOA
 #define C_input_EXTI_IRQn EXTI0_IRQn
+#define LED_output_Pin GPIO_PIN_1
+#define LED_output_GPIO_Port GPIOA
 #define LD3_Pin GPIO_PIN_3
 #define LD3_GPIO_Port GPIOB
 
