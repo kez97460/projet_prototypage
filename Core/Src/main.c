@@ -58,6 +58,8 @@ volatile uint32_t rising_edge_count = 0;
 
 char uart_message[128] = "Hey";
 
+uint32_t led_active_time = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,8 +122,13 @@ int main(void)
   while (1)
   {
 	  measure();
-	  HAL_Delay(100);
+	  if(sensor_capacity_pF > 20)
+	  {
+		  led_active_time = 10000;
+	  }
 
+	  // UART : debug
+	  HAL_Delay(1000);
 	  sprintf(uart_message, "Freq : %f Hz  - C : %f pF \r\n", sensor_input_frequency_hz, sensor_capacity_pF);
 	  HAL_UART_Transmit(&huart2, (unsigned char*) uart_message, 64, 500);
     /* USER CODE END WHILE */
@@ -260,6 +267,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_output_GPIO_Port, LED_output_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : C_input_Pin */
@@ -267,6 +277,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(C_input_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LED_output_Pin */
+  GPIO_InitStruct.Pin = LED_output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_output_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;
@@ -297,6 +314,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 {
 	if(htim->Instance == TIM6) // TIM6 : counts to 1000 with increments every 1us, for a total 1ms
 	{
+		if(led_active_time > 0)
+		{
+			led_active_time--;
+		}
+
 		if(tim6_activate && !tim6_active)
 		{
 			tim6_active = 1;
@@ -313,6 +335,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 			sensor_capacity_pF = (1 / sensor_input_frequency_hz) * PERIOD_CAPA_COEFF + PERIOD_CAPA_BASE;
 		}
 	}
+
+	if(led_active_time)
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1);
+	  }
+	  else
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 0);
+	  }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
