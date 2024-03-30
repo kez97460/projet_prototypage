@@ -58,6 +58,8 @@ volatile uint32_t rising_edge_count = 0;
 
 char uart_message[128] = "Hey";
 
+uint32_t led_active_time = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,17 +122,13 @@ int main(void)
   while (1)
   {
 	  measure();
-	  if(sensor_capacity_pF > 50)
+	  if(sensor_capacity_pF > 20)
 	  {
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
-	  }
-	  else
-	  {
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+		  led_active_time = 10000;
 	  }
 
 	  // UART : debug
-	  HAL_Delay(100);
+	  HAL_Delay(1000);
 	  sprintf(uart_message, "Freq : %f Hz  - C : %f pF \r\n", sensor_input_frequency_hz, sensor_capacity_pF);
 	  HAL_UART_Transmit(&huart2, (unsigned char*) uart_message, 64, 500);
     /* USER CODE END WHILE */
@@ -316,6 +314,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 {
 	if(htim->Instance == TIM6) // TIM6 : counts to 1000 with increments every 1us, for a total 1ms
 	{
+		if(led_active_time > 0)
+		{
+			led_active_time--;
+		}
+
 		if(tim6_activate && !tim6_active)
 		{
 			tim6_active = 1;
@@ -332,6 +335,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 			sensor_capacity_pF = (1 / sensor_input_frequency_hz) * PERIOD_CAPA_COEFF + PERIOD_CAPA_BASE;
 		}
 	}
+
+	if(led_active_time)
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 1);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1);
+	  }
+	  else
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 0);
+	  }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
